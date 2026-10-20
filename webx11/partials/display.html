@@ -763,6 +763,19 @@
         }}
 
         // Only send special keys via key events, regular text via input event
+        // Browser shortcuts can swallow keyup when closing a tab or moving
+        // focus away. Server disconnect cleanup is the fallback if this
+        // message cannot be delivered while the page is closing.
+        function releaseKeys() {{
+            sendMessage({{type: 'release_keys'}});
+        }}
+
+        window.addEventListener('blur', releaseKeys);
+        window.addEventListener('pagehide', releaseKeys);
+        document.addEventListener('visibilitychange', () => {{
+            if (document.hidden) releaseKeys();
+        }});
+
         document.addEventListener('keydown', (e) => {{
             if (e.key === 'F3') return; // Already handled above
 

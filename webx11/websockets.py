@@ -46,6 +46,8 @@ class WebSocketHandler:
         except ConnectionError:
             print(f"WebSocket connection closed for window {display_id}")
         finally:
+            if window_display.input_handler:
+                window_display.input_handler.release_keys(websocket)
             for c in list(self.connected_clients):
                 if c.get('websocket') == websocket:
                     self.connected_clients.remove(c)
@@ -77,6 +79,8 @@ class WebSocketHandler:
                 await self.handle_key_event(websocket, data, True, display_id)
             elif msg_type == 'keyup':
                 await self.handle_key_event(websocket, data, False, display_id)
+            elif msg_type == 'release_keys':
+                window_display.input_handler.release_keys(websocket)
             elif msg_type == 'text_input':
                 await self.handle_text_input(websocket, data, display_id)
             elif msg_type == 'refresh':
@@ -129,7 +133,7 @@ class WebSocketHandler:
         if key:
             window_display = self.window_manager.get_display(display_id)
             if window_display and window_display.input_handler:
-                window_display.input_handler.send_key_event_by_name(key, pressed)
+                window_display.input_handler.send_key_event_by_name(key, pressed, client=websocket)
 
     async def handle_text_input(self, websocket, data, display_id):
         text = data.get('text', '')
